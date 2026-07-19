@@ -2,29 +2,125 @@
   {
     "unit": 1,
     "topic": "Greeting",
-    "vocabulary": ["hello", "goodbye", "how are you"],
-    "grammar": "greetings"
+    "vocabulary": ["hello", "hi", "goodbye", "good morning", "how are you", "nice to meet you", "see you", "thank you"],
+    "grammar": "greetings and polite phrases"
   },
   {
     "unit": 2,
     "topic": "Family",
-    "vocabulary": ["mother", "father", "sister", "brother"],
+    "vocabulary": ["mother", "father", "sister", "brother", "grandma", "grandpa", "family", "baby", "uncle", "aunt"],
     "grammar": "possessive (my/your)"
   },
   {
     "unit": 3,
     "topic": "School",
-    "vocabulary": ["teacher", "classroom", "book", "pencil"],
+    "vocabulary": ["teacher", "classroom", "book", "pencil", "bag", "friend", "desk", "homework", "recess", "board"],
     "grammar": "there is/are"
   },
   {
     "unit": 4,
     "topic": "Food",
-    "vocabulary": ["apple", "rice", "hungry", "delicious"],
-    "grammar": "do you like...?"
+    "vocabulary": ["apple", "banana", "rice", "noodles", "hungry", "delicious", "breakfast", "lunch", "dinner", "water"],
+    "grammar": "Do you like...?"
   },
   {
     "unit": 5,
+    "topic": "Animals",
+    "vocabulary": ["dog", "cat", "bird", "fish", "rabbit", "elephant", "lion", "monkey", "pet", "zoo"],
+    "grammar": "What is it? / It is a..."
+  },
+  {
+    "unit": 6,
+    "topic": "Weather",
+    "vocabulary": ["sunny", "rainy", "cloudy", "windy", "hot", "cold", "umbrella", "coat", "weather", "today"],
+    "grammar": "How is the weather?"
+  },
+  {
+    "unit": 7,
+    "topic": "Colors & Shapes",
+    "vocabulary": ["red", "blue", "green", "yellow", "circle", "square", "triangle", "big", "small", "color"],
+    "grammar": "What color is it?"
+  },
+  {
+    "unit": 8,
+    "topic": "My Day",
+    "vocabulary": ["wake up", "brush teeth", "eat", "go to school", "play", "sleep", "morning", "afternoon", "night", "wash"],
+    "grammar": "present simple daily routine"
+  },
+  {
+    "unit": 9,
+    "topic": "Hobbies",
+    "vocabulary": ["draw", "sing", "dance", "read", "play games", "Minecraft", "build", "hobby", "fun", "like"],
+    "grammar": "I like + verb-ing"
+  },
+  {
+    "unit": 10,
+    "topic": "Sports",
+    "vocabulary": ["football", "swim", "run", "jump", "ball", "team", "win", "play", "sport", "bike"],
+    "grammar": "Can you...?"
+  },
+  {
+    "unit": 11,
+    "topic": "Transportation",
+    "vocabulary": ["car", "bus", "bike", "train", "plane", "fast", "slow", "drive", "ride", "wheel"],
+    "grammar": "How do you go to...?"
+  },
+  {
+    "unit": 12,
+    "topic": "Dinosaurs",
+    "vocabulary": ["dinosaur", "T-Rex", "big", "small", "roar", "egg", "tail", "teeth", "fossil", "extinct"],
+    "grammar": "Was/Were (past simple basic)"
+  },
+  {
+    "unit": 13,
+    "topic": "My Room",
+    "vocabulary": ["bed", "desk", "chair", "window", "door", "lamp", "toy", "pillow", "shelf", "clean"],
+    "grammar": "Where is...? / Prepositions (in/on/under)"
+  },
+  {
+    "unit": 14,
+    "topic": "Feelings",
+    "vocabulary": ["happy", "sad", "angry", "tired", "excited", "scared", "hungry", "thirsty", "feel", "better"],
+    "grammar": "How do you feel? / I am..."
+  },
+  {
+    "unit": 15,
+    "topic": "Shopping",
+    "vocabulary": ["buy", "sell", "money", "price", "cheap", "expensive", "shop", "bag", "please", "change"],
+    "grammar": "How much is it?"
+  },
+  {
+    "unit": 16,
+    "topic": "Market",
+    "vocabulary": ["market", "buy", "price", "vendor", "fresh", "fruit", "vegetable", "bargain", "basket", "scale"],
+    "grammar": "I want... / How much...?"
+  },
+  {
+    "unit": 17,
+    "topic": "Countryside trip",
+    "vocabulary": ["countryside", "village", "visit", "grandma", "river", "tree", "fresh air", "field", "path", "weekend"],
+    "grammar": "past simple: went / visited"
+  },
+  {
+    "unit": 18,
+    "topic": "Farm",
+    "vocabulary": ["farm", "farmer", "cow", "chicken", "pig", "horse", "barn", "feed", "crop", "tractor"],
+    "grammar": "What do you see? / There is/are"
+  },
+  {
+    "unit": 19,
+    "topic": "Restaurant",
+    "vocabulary": ["restaurant", "menu", "order", "waiter", "delicious", "bill", "table", "hungry", "drink", "dessert"],
+    "grammar": "I would like... / Can I have...?"
+  },
+  {
+    "unit": 20,
+    "topic": "Doctor visit",
+    "vocabulary": ["doctor", "nurse", "hospital", "sick", "medicine", "fever", "cough", "hurt", "better", "rest"],
+    "grammar": "What's wrong? / I have a..."
+  },
+  {
+    "unit": 21,
     "topic": "Review",
     "vocabulary": [],
     "grammar": "mixed review"

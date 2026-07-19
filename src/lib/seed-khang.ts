@@ -8,6 +8,7 @@ export const KHANG_SEED: ChildState = {
     level: "A1",
     goals: "Nói tự tin trong 15 phút mỗi ngày",
     interests: ["cars", "dinosaurs", "Minecraft"],
+    start_date: "2026-07-14",
   },
   mission: {
     week: "2026-07-14",

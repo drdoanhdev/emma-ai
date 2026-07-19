@@ -12,6 +12,8 @@ type TodayPayload = {
   vocabulary: string[];
 };
 
+type TopicSource = "planner" | "child_initiated";
+
 type Props = {
   durationMin: number;
   onDone: () => void;
@@ -30,6 +32,7 @@ export default function SessionWrapUp({
   const [enjoyment, setEnjoyment] = useState<Enjoyment>("😀");
   const [notes, setNotes] = useState("");
   const [grammarWeak, setGrammarWeak] = useState(false);
+  const [topicSource, setTopicSource] = useState<TopicSource>("planner");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +89,7 @@ export default function SessionWrapUp({
           enjoyment,
           notes,
           grammar_weak: grammarWeak ? today.grammar : undefined,
+          topic_source: topicSource,
         }),
       });
       const data = await res.json();
@@ -153,6 +157,32 @@ export default function SessionWrapUp({
           </ul>
         </section>
       )}
+
+      <section className={styles.section}>
+        <h3 className={styles.heading}>Chủ đề hôm nay do ai chọn?</h3>
+        <div className={styles.row}>
+          <button
+            type="button"
+            className={
+              topicSource === "planner" ? styles.chipActive : styles.chip
+            }
+            onClick={() => setTopicSource("planner")}
+          >
+            Gợi ý Emma
+          </button>
+          <button
+            type="button"
+            className={
+              topicSource === "child_initiated"
+                ? styles.chipActive
+                : styles.chip
+            }
+            onClick={() => setTopicSource("child_initiated")}
+          >
+            Con tự đề xuất
+          </button>
+        </div>
+      </section>
 
       <section className={styles.section}>
         <h3 className={styles.heading}>Did you enjoy today?</h3>

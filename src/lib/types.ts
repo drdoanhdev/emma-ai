@@ -14,6 +14,8 @@ export type ChildProfile = {
   level: CefrLevel;
   goals: string;
   interests: string[];
+  /** ISO date (YYYY-MM-DD) when the child started using the app — drives unit rotation */
+  start_date?: string;
 };
 
 export type WeeklyMission = {
@@ -65,6 +67,8 @@ export type SessionSummary = {
   child_confidence: ChildConfidence;
   enjoyment: Enjoyment;
   notes: string;
+  /** How today's topic was chosen (docs 3c). */
+  topic_source: "planner" | "child_initiated";
 };
 
 export type ChildState = {
@@ -89,21 +93,21 @@ export type TodayPlan = {
   wrapUpMinutes: number;
   maxNewQuestions: number;
   dayMode: DayMode;
+  /** Two opening topic suggestions for Emma to offer the child. */
+  topicSuggestions: CurriculumUnit[];
 };
 
 /** Parent/child report after a voice session — feeds updateState (code, not AI). */
 export type SessionReport = {
   duration_min: number;
   topic: string;
-  /** Words used correctly this session (new or review). */
   words_correct: string[];
-  /** Words forgotten / struggled with. */
   words_forgot: string[];
   child_confidence: ChildConfidence;
   enjoyment: Enjoyment;
   notes?: string;
-  /** Optional: mark a grammar point as still weak. */
   grammar_weak?: string;
+  topic_source?: "planner" | "child_initiated";
 };
 
 export const DAY_MODE_OPTIONS: {

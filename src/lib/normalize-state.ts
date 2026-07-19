@@ -26,7 +26,10 @@ export function normalizeChildState(raw: ChildState): ChildState {
         (interests.find((i) => /minecraft|game/i.test(i)) ?? ""),
       favorite_sport: pref?.favorite_sport ?? "",
     },
-    session_history: raw.session_history ?? [],
+    session_history: (raw.session_history ?? []).map((s) => ({
+      ...s,
+      topic_source: s.topic_source ?? "planner",
+    })),
   };
 }
 

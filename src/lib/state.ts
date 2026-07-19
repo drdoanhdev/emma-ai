@@ -3,6 +3,7 @@ import type { ChildState } from "./types";
 import { KHANG_SEED } from "./seed-khang";
 import { defaultChildState, normalizeChildState } from "./normalize-state";
 import { DEFAULT_CHILD_ID } from "./child-id";
+import { applyCurrentUnitToMission } from "./planner";
 
 const SEEDS: Record<string, ChildState> = {
   [DEFAULT_CHILD_ID]: defaultChildState(KHANG_SEED),
@@ -42,8 +43,41 @@ function getRedis(): Redis {
   return redisSingleton;
 }
 
+async function finalizeState(
+  redis: Redis,
+  key: string,
+  raw: ChildState,
+  childId: string,
+): Promise<ChildState> {
+  let normalized = normalizeChildState(raw);
+
+  if (childId === DEFAULT_CHILD_ID && normalized.profile.name !== "Duy Khang") {
+    normalized = {
+      ...normalized,
+      profile: { ...normalized.profile, name: "Duy Khang" },
+    };
+  }
+
+  // Recalculate current_unit/topic from start_date when no parent_note (docs 3c / user req)
+  const withUnit = applyCurrentUnitToMission(normalized);
+  const changed =
+    JSON.stringify(withUnit.mission) !== JSON.stringify(normalized.mission) ||
+    withUnit.profile.start_date !== normalized.profile.start_date ||
+    withUnit.profile.name !== raw.profile?.name ||
+    !raw.learning_memory ||
+    !raw.preference_memory ||
+    !raw.session_history;
+
+  if (changed) {
+    await redis.set(key, withUnit);
+  }
+
+  return withUnit;
+}
+
 /**
  * Load child state. Migrates legacy `child:minh` → `child:khang` once if needed.
+ * Also refreshes mission.current_unit / topic from curriculum weeks.
  */
 export async function getChildState(
   childId: string = DEFAULT_CHILD_ID,
@@ -52,40 +86,18 @@ export async function getChildState(
   const key = childKey(childId);
   let stored = await redis.get<ChildState>(key);
 
-  // One-time migrate from Week 1–2 key
   if (!stored && childId === DEFAULT_CHILD_ID) {
     const legacy = await redis.get<ChildState>(childKey("minh"));
     if (legacy) {
-      stored = normalizeChildState({
+      stored = {
         ...legacy,
-        profile: {
-          ...legacy.profile,
-          name: "Duy Khang",
-        },
-      });
-      await redis.set(key, stored);
+        profile: { ...legacy.profile, name: "Duy Khang" },
+      };
     }
   }
 
   if (stored) {
-    const normalized = normalizeChildState(stored);
-    // Ensure display name matches the household child
-    if (
-      childId === DEFAULT_CHILD_ID &&
-      normalized.profile.name !== "Duy Khang"
-    ) {
-      normalized.profile = { ...normalized.profile, name: "Duy Khang" };
-      await redis.set(key, normalized);
-      return normalized;
-    }
-    if (
-      !stored.learning_memory ||
-      !stored.preference_memory ||
-      !stored.session_history
-    ) {
-      await redis.set(key, normalized);
-    }
-    return normalized;
+    return finalizeState(redis, key, stored, childId);
   }
 
   const seed = SEEDS[childId];
@@ -93,8 +105,9 @@ export async function getChildState(
     throw new Error(`Unknown childId (no seed): ${childId}`);
   }
 
-  await redis.set(key, seed);
-  return seed;
+  const finalized = applyCurrentUnitToMission(seed);
+  await redis.set(key, finalized);
+  return finalized;
 }
 
 export async function saveChildState(

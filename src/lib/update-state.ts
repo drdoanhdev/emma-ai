@@ -5,6 +5,7 @@ import {
   markForgot,
   todayISO,
 } from "./review-engine";
+import { recalculateLevel } from "./planner";
 import type {
   ChildState,
   SessionReport,
@@ -30,6 +31,7 @@ function upsertVocab(
 
 /**
  * Pure code update from Session Summary — never let LLM decide learned/unknown.
+ * Also recalculates profile.level (docs 2d).
  */
 export function updateStateFromSession(
   state: ChildState,
@@ -72,10 +74,15 @@ export function updateStateFromSession(
   if (weakKey && !grammar_weak.includes(weakKey)) {
     grammar_weak = [...grammar_weak, weakKey];
   }
-  // If practiced successfully and was weak, drop from weak list
   if (grammarKey && correctSet.size > 0 && !report.grammar_weak) {
     grammar_weak = grammar_weak.filter((g) => g !== grammarKey);
   }
+
+  const learning_memory = {
+    vocab,
+    grammar_covered,
+    grammar_weak,
+  };
 
   const summary: SessionSummary = {
     date: sessionDate,
@@ -96,15 +103,18 @@ export function updateStateFromSession(
     child_confidence: report.child_confidence,
     enjoyment: report.enjoyment,
     notes: report.notes?.trim() ?? "",
+    topic_source: report.topic_source ?? "planner",
   };
+
+  const level = recalculateLevel(learning_memory);
 
   return {
     ...state,
-    learning_memory: {
-      vocab,
-      grammar_covered,
-      grammar_weak,
+    profile: {
+      ...state.profile,
+      level,
     },
+    learning_memory,
     session_history: [...state.session_history, summary],
   };
 }

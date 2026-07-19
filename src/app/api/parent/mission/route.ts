@@ -29,6 +29,8 @@ type ParentPatch = {
   parent_note?: string;
   day_mode?: DayMode;
   preference_memory?: Partial<PreferenceMemory>;
+  /** ISO date YYYY-MM-DD — for testing unit rotation without waiting 7 days */
+  start_date?: string;
 };
 
 export async function POST(request: Request) {
@@ -50,6 +52,12 @@ export async function POST(request: Request) {
     const current = await getChildState(DEFAULT_CHILD_ID);
     const next: ChildState = {
       ...current,
+      profile: {
+        ...current.profile,
+        ...(body.start_date !== undefined
+          ? { start_date: body.start_date }
+          : {}),
+      },
       mission: {
         ...current.mission,
         ...(body.parent_note !== undefined

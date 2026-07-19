@@ -2,6 +2,8 @@
 
 **Nguyên tắc:** dự án cho 1–2 con, không phải sản phẩm nhiều người dùng. Không thêm hạ tầng (database, ORM, auth) mà một dự án cá nhân không cần. Nếu sau này thực sự mở rộng thành SaaS, migrate lúc đó — không trả giá trước.
 
+> **Cập nhật (khi deploy lên Vercel):** Vercel serverless functions có filesystem chỉ đọc (read-only, ephemeral) — không thể ghi bền vững vào file JSON local như mô tả gốc bên dưới. Khi đã deploy, thay lớp lưu trữ bằng **Vercel KV** (kho key-value đơn giản, vẫn lưu nguyên object JSON dưới 1 key, ví dụ `child:minh`) — không phải PostgreSQL/Prisma, không phá nguyên tắc "không DB phức tạp" ở trên. Nếu chỉ chạy `npm run dev` trên máy cá nhân, không cần Vercel KV, file JSON local vẫn dùng được bình thường.
+
 ## 0. Curriculum Engine (JSON tĩnh, không phải AI)
 
 Để không phải tự nghĩ mission mỗi tuần, có một danh sách Unit cố định, Planner tự lấy Unit hiện tại theo thứ tự:
@@ -129,7 +131,50 @@ Trả lời đúng → tăng `review_stage` lên 1. Trả lời sai/quên → gi
 `updateState()` nên được viết bằng code thuần dựa trên Session Summary (không phải để LLM tự parse transcript rồi tự kết luận "known/unknown"). Nếu cần LLM hỗ trợ nhận diện "con có dùng đúng từ X không trong buổi này", chỉ dùng nó để trả về **true/false cho một câu hỏi cụ thể**, không để nó tự quyết định trạng thái cuối cùng — trạng thái cuối cùng luôn do rule ở trên (code) tính toán.
 
 
-## 3. Planner (code thuần, không phải AI)
+## 3c. Session Opening — để con chọn chủ đề thay vì áp đặt
+
+**Vấn đề đã phát hiện qua thực tế dùng:** áp đặt cứng chủ đề từ Curriculum khiến buổi học nhàm chán, lặp lại. Giải pháp: Planner chuẩn bị gợi ý, nhưng Emma hỏi con trước khi khóa chủ đề.
+
+```ts
+function buildTopicSuggestions(state, curriculum) {
+  const curriculumTopic = getCurrentUnit(curriculum, state.mission.current_unit);
+  const interestTopic = pickTopicFromInterests(state.profile.interests, curriculum);
+  return [curriculumTopic, interestTopic]; // 2 gợi ý đưa cho Emma hỏi con
+}
+```
+
+Đầu mỗi buổi, system prompt chỉ dẫn Emma hỏi dạng: *"Hôm nay mình nói về [Topic A] hay [Topic B]? Hay con muốn kể chuyện gì khác không?"*
+
+**3 nhánh xử lý theo câu trả lời của con:**
+
+| Con chọn | Xử lý |
+|---|---|
+| Chọn 1 trong 2 gợi ý | Dùng nguyên `mission.vocabulary`/`grammar` của Unit đó — giữ nguyên logic Planner cũ |
+| Tự đề xuất tình huống khác (tiếng Việt hoặc Anh, vd "đi chợ", "về quê chơi") | Emma đóng vai theo tình huống đó bằng tiếng Anh. Prompt Builder vẫn đưa `mission.vocabulary` hôm nay vào system prompt kèm chỉ dẫn: "cố gắng lồng ghép tự nhiên các từ này vào tình huống, không ép nếu không hợp; luôn dạy ít nhất 1-2 từ mới liên quan trực tiếp đến tình huống con chọn (vd 'market' → 'buy', 'price', 'vendor')" |
+| Im lặng / không có ý kiến | Mặc định dùng gợi ý đầu tiên (curriculumTopic) |
+
+**Ghi vào Session Summary** thêm trường `topic_source: "planner" | "child_initiated"` để sau này xem lại con thường chủ động đề xuất chủ đề gì (dùng để làm giàu Curriculum dần theo sở thích thật của con).
+
+**Curriculum nên bổ sung các chủ đề thực tế hay gặp:** Market (Đi chợ), Countryside trip (Về quê), Farm (Nông trại), Restaurant (Nhà hàng), Doctor visit (Đi khám bệnh) — vì đây rõ ràng là các tình huống con quan tâm.
+
+## 2d. Level Progression — tăng độ khó câu tự động theo tiến bộ thật
+
+Không tăng `profile.level` thủ công. Code tự tính lại sau mỗi `updateState()`, dựa trên dữ liệu đã có sẵn trong `learning_memory`:
+
+```ts
+function recalculateLevel(learningMemory) {
+  const learnedCount = learningMemory.vocab.filter(w => w.status === "learned").length;
+  const grammarCount = learningMemory.grammar_covered.length;
+
+  if (learnedCount >= 100 && grammarCount >= 12) return "B1";
+  if (learnedCount >= 40 && grammarCount >= 5) return "A2";
+  return "A1";
+}
+```
+
+Khi `profile.level` tăng, bảng giới hạn độ dài câu ở `docs/01-vision-safety.md` mục 4b tự áp dụng câu dài/phức tạp hơn cho Emma — không cần chỉnh tay. Số ngưỡng (100/40, 12/5...) là gợi ý ban đầu, tinh chỉnh lại sau khi quan sát thực tế con dùng bao lâu thì thực sự sẵn sàng lên trình độ tiếp theo.
+
+
 
 Planner là hàm JavaScript/TypeScript thông thường, tính toán trước khi build prompt:
 
