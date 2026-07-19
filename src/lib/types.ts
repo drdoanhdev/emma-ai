@@ -21,8 +21,48 @@ export type WeeklyMission = {
   day_mode: DayMode;
 };
 
-/** Week 1: profile + mission only */
+export type CurriculumUnit = {
+  unit: number;
+  topic: string;
+  vocabulary: string[];
+  grammar: string;
+};
+
+/** Week 2: profile + mission. Memory fields come in later weeks. */
 export type ChildState = {
   profile: ChildProfile;
   mission: WeeklyMission;
 };
+
+export type TodayPlan = {
+  /** Resolved content source: parent mission or curriculum unit */
+  topic: string;
+  vocabulary: string[];
+  grammar: string;
+  missionSentence: string;
+  parentNote: string;
+  contentSource: "parent_note" | "curriculum";
+  reviewWords: string[];
+  newWords: string[];
+  conversationMinutes: number;
+  gameMinutes: number;
+  wrapUpMinutes: number;
+  maxNewQuestions: number;
+  dayMode: DayMode;
+};
+
+export const DAY_MODE_OPTIONS: { value: DayMode; label: string; hint: string }[] =
+  [
+    { value: "normal", label: "Normal", hint: "Buổi học bình thường" },
+    { value: "tired", label: "Tired", hint: "Con mệt — ít hỏi mới, nhiều game" },
+    {
+      value: "light_only",
+      label: "Light only",
+      hint: "Chỉ chơi, không học nghiêm túc",
+    },
+    {
+      value: "review_focus",
+      label: "Review focus",
+      hint: "Mai kiểm tra — tăng ôn, bỏ nội dung mới",
+    },
+  ];

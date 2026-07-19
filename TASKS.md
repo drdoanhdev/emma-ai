@@ -9,15 +9,15 @@ Checklist theo `docs/03-roadmap.md`. Tick từng mục khi hoàn thành và test
 - [x] Tích hợp Realtime Voice API (OpenAI Realtime hoặc Gemini Live — chọn 1)
 - [x] Màn hình hội thoại tối giản: 1 nút "Nói chuyện với Emma"
 - [x] Prompt Builder bản đầu: Personality + Safety + Profile + Mission
-- [ ] Kiểm tra độ trễ và chất lượng giọng
-- [ ] **Cho con thử** — ghi chú phản ứng: có thích giọng không, có muốn nói tiếp không
+- [x] Kiểm tra độ trễ và chất lượng giọng
+- [x] **Cho con thử** — ghi chú phản ứng: có thích giọng không, có muốn nói tiếp không
 
 ## Tuần 2 — Curriculum + Planner + Weekly Mission
 
-- [ ] Tạo `data/curriculum.json` (danh sách Unit tĩnh)
-- [ ] Viết Planner (code thuần) — xử lý `day_mode`
-- [ ] Trang phụ huynh: ô nhập Parent Mission + 4 nút chọn `day_mode`
-- [ ] Prompt Builder: ưu tiên `parent_note` → fallback Curriculum
+- [x] Tạo `data/curriculum.json` (danh sách Unit tĩnh)
+- [x] Viết Planner (code thuần) — xử lý `day_mode`
+- [x] Trang phụ huynh: ô nhập Parent Mission + 4 nút chọn `day_mode`
+- [x] Prompt Builder: ưu tiên `parent_note` → fallback Curriculum
 - [ ] **Cho con thử lại** — so sánh với tuần 1, ghi chú
 
 ## Tuần 3–4 — Learning Memory + Review Engine

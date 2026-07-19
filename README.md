@@ -4,56 +4,35 @@ Trợ lý luyện giao tiếp tiếng Anh bằng giọng nói cho trẻ 6–12 t
 
 ## Tài liệu thiết kế (đọc trước khi code)
 
-Toàn bộ quyết định kiến trúc và triết lý sản phẩm nằm ở `/docs`, không nằm rải rác trong lịch sử chat:
-
-- [`docs/01-vision-safety.md`](docs/01-vision-safety.md) — mục tiêu, tính cách Emma, rào chắn an toàn (bắt buộc tuân thủ).
-- [`docs/02-architecture-data.md`](docs/02-architecture-data.md) — kiến trúc, schema dữ liệu, Planner, Review Engine.
+- [`docs/01-vision-safety.md`](docs/01-vision-safety.md) — mục tiêu, tính cách Emma, rào chắn an toàn.
+- [`docs/02-architecture-data.md`](docs/02-architecture-data.md) — kiến trúc, schema, Planner, Review Engine.
 - [`docs/03-roadmap.md`](docs/03-roadmap.md) — lộ trình theo tuần, Success Metrics.
-
-Cursor Rules ở `.cursor/rules/` tự động nạp các tài liệu này vào mỗi phiên làm việc.
-
-## Nguyên tắc cốt lõi
-
-- Emma là bạn đồng hành (80%), không phải giáo viên nghiêm túc (20%).
-- Không tạo gắn bó tình cảm giả (không nói "I missed you"...).
-- Planner quyết định nội dung mỗi buổi bằng code — không để AI tự do dẫn dắt.
-- Không dùng database/ORM/auth phức tạp — chỉ file JSON local, vì đây là dự án cho 1–2 con, không phải nhiều người dùng.
 
 ## Tech stack
 
 - Next.js (App Router) + TypeScript
-- OpenAI Realtime API hoặc Gemini Live API cho voice
-- Lưu trữ: file JSON local trong `/data`
+- OpenAI Realtime API (voice)
+- State: Upstash Redis (`child:{id}`) — profile/mission
+- Curriculum tĩnh: `data/curriculum.json` (file local, không Redis)
 
-## Chạy dự án (local)
+## Chạy local
 
 ```bash
 npm install
+cp .env.example .env.local   # Windows: copy .env.example .env.local
+# Điền OPENAI_API_KEY + Redis URL/TOKEN
 npm run dev
 ```
 
-Cần file `.env.local` chứa API key (xem `.env.example`). File này **không** được commit lên Git.
+Mở http://localhost:3000 (con) và http://localhost:3000/parent (phụ huynh).
 
-## Deploy lên Vercel
+## Deploy Vercel
 
-App Week 1 chỉ **đọc** `data/minh.json` (không ghi file) nên chạy được trên Vercel. HTTPS của Vercel cũng cho phép test mic trên điện thoại.
+1. Thêm env: `OPENAI_API_KEY`, và `KV_REST_API_URL` + `KV_REST_API_TOKEN` (hoặc cặp `UPSTASH_REDIS_REST_*`).
+2. Deploy → mở `https://….vercel.app` và `/parent`.
 
-1. Đẩy code lên GitHub (repo nên để **Private** vì có hồ sơ con trong `data/minh.json`).
-2. Vào [vercel.com](https://vercel.com) → **Add New Project** → chọn repo `emma-ai`.
-3. **Environment Variables** (Production + Preview):
-   - `OPENAI_API_KEY` = key OpenAI
-   - (tuỳ chọn) `CHILD_STATE_JSON` = nội dung JSON đầy đủ của `data/minh.json` nếu không muốn commit file đó
-4. Deploy → mở URL `https://….vercel.app` trên điện thoại.
+Lần đầu `getChildState("minh")` sẽ seed từ `data/minh.json` vào Redis nếu key chưa có.
 
-Hoặc từ máy local (đã đăng nhập Vercel CLI):
+## Trạng thái
 
-```bash
-npx vercel
-npx vercel --prod
-```
-
-**Lưu ý:** từ Tuần 2 trở đi, trang phụ huynh / Memory cần **ghi** JSON — filesystem Vercel không bền. Khi tới đó sẽ cần cách lưu khác hoặc giữ phần ghi trên máy local; Week 1 voice thì deploy ổn.
-
-## Trạng thái hiện tại
-
-Xem [`TASKS.md`](TASKS.md) để biết đang ở milestone nào.
+Xem [`TASKS.md`](TASKS.md).

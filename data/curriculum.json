@@ -1,0 +1,32 @@
+[
+  {
+    "unit": 1,
+    "topic": "Greeting",
+    "vocabulary": ["hello", "goodbye", "how are you"],
+    "grammar": "greetings"
+  },
+  {
+    "unit": 2,
+    "topic": "Family",
+    "vocabulary": ["mother", "father", "sister", "brother"],
+    "grammar": "possessive (my/your)"
+  },
+  {
+    "unit": 3,
+    "topic": "School",
+    "vocabulary": ["teacher", "classroom", "book", "pencil"],
+    "grammar": "there is/are"
+  },
+  {
+    "unit": 4,
+    "topic": "Food",
+    "vocabulary": ["apple", "rice", "hungry", "delicious"],
+    "grammar": "do you like...?"
+  },
+  {
+    "unit": 5,
+    "topic": "Review",
+    "vocabulary": [],
+    "grammar": "mixed review"
+  }
+]

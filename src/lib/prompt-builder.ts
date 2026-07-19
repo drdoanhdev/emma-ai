@@ -1,4 +1,11 @@
-import type { CefrLevel, ChildProfile, ChildState, WeeklyMission } from "./types";
+import type {
+  CefrLevel,
+  ChildProfile,
+  ChildState,
+  TodayPlan,
+  WeeklyMission,
+} from "./types";
+import { buildTodayPlan } from "./planner";
 
 const MAX_WORDS_BY_LEVEL: Record<CefrLevel, number> = {
   A1: 8,
@@ -59,25 +66,48 @@ function buildProfileSection(profile: ChildProfile): string {
 Use the child's name naturally. Lightly use interests for examples when it fits the mission.`;
 }
 
-function buildMissionSection(mission: WeeklyMission): string {
+function buildMissionSection(
+  mission: WeeklyMission,
+  plan: TodayPlan,
+): string {
+  const sourceNote =
+    plan.contentSource === "parent_note"
+      ? "Content source: PARENT NOTE (highest priority — follow this closely)."
+      : "Content source: Curriculum unit (no parent note this week).";
+
   return `# Weekly Mission
 - Week: ${mission.week}
 - Unit: ${mission.current_unit}
-- Topic: ${mission.topic}
-- Vocabulary to practice: ${mission.vocabulary.join(", ")}
-- Grammar focus: ${mission.grammar}
-- Mission sentence: ${mission.mission_sentence}
-- Parent note (priority guidance): ${mission.parent_note || "(none)"}
-- Day mode: ${mission.day_mode}
-Guide the conversation around this mission. Prefer parent_note when it is specific.`;
+- Topic: ${plan.topic}
+- Vocabulary to practice: ${plan.vocabulary.join(", ") || "(none)"}
+- Grammar focus: ${plan.grammar}
+- Mission sentence: ${plan.missionSentence}
+- Parent note: ${plan.parentNote || "(none)"}
+- Day mode: ${plan.dayMode}
+- ${sourceNote}
+Guide the conversation around this mission. Do not invent a different lesson topic.`;
 }
 
-/** Week 1 Prompt Builder: Personality + Safety + Profile + Mission only */
-export function buildSystemPrompt(state: ChildState): string {
+function buildBudgetSection(plan: TodayPlan): string {
+  return `# Today's Budget (from Planner — follow these limits)
+- Day mode: ${plan.dayMode}
+- New words to introduce (max): ${plan.newWords.join(", ") || "(none today)"}
+- Review words: ${plan.reviewWords.join(", ") || "(none yet — Learning Memory comes later)"}
+- Conversation minutes: ~${plan.conversationMinutes}
+- Game minutes: ~${plan.gameMinutes}
+- Wrap-up minutes: ~${plan.wrapUpMinutes}
+- Max new questions this session: ${plan.maxNewQuestions}
+Do not teach more new words or ask more new questions than this budget allows.`;
+}
+
+/** Week 2: Personality + Safety + Profile + Mission (resolved) + Budget. No Memory yet. */
+export function buildSystemPrompt(state: ChildState, plan?: TodayPlan): string {
+  const today = plan ?? buildTodayPlan(state);
   return [
     buildPersonalitySection(state.profile.level),
     buildSafetySection(),
     buildProfileSection(state.profile),
-    buildMissionSection(state.mission),
+    buildMissionSection(state.mission, today),
+    buildBudgetSection(today),
   ].join("\n\n");
 }

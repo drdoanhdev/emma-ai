@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
-import { loadChildState } from "@/lib/load-child-state";
+import { getChildState } from "@/lib/state";
+import { buildTodayPlan } from "@/lib/planner";
 import { buildSystemPrompt } from "@/lib/prompt-builder";
 
 export const runtime = "nodejs";
 
 const REALTIME_MODEL = "gpt-realtime";
 const REALTIME_VOICE = "coral";
+const DEFAULT_CHILD = "minh";
 
 /**
  * Unified WebRTC session: browser sends SDP offer;
- * server attaches session config (instructions from minh.json) and
+ * server loads child state from Redis, builds prompt via Planner,
  * authenticates with OPENAI_API_KEY — key never reaches the client.
  */
 export async function POST(request: Request) {
@@ -28,14 +30,14 @@ export async function POST(request: Request) {
 
   let instructions: string;
   try {
-    const state = await loadChildState("minh");
-    instructions = buildSystemPrompt(state);
+    const state = await getChildState(DEFAULT_CHILD);
+    const plan = buildTodayPlan(state);
+    instructions = buildSystemPrompt(state, plan);
   } catch (err) {
     console.error("Failed to load child state / build prompt:", err);
-    return NextResponse.json(
-      { error: "Failed to load data/minh.json or build system prompt" },
-      { status: 500 },
-    );
+    const message =
+      err instanceof Error ? err.message : "Failed to build system prompt";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const sessionConfig = JSON.stringify({
@@ -45,7 +47,6 @@ export async function POST(request: Request) {
     audio: {
       input: {
         turn_detection: { type: "server_vad" },
-        // Needed for English captions of what the child says
         transcription: {
           model: "gpt-4o-mini-transcribe",
           language: "en",
@@ -53,7 +54,6 @@ export async function POST(request: Request) {
       },
       output: {
         voice: REALTIME_VOICE,
-        // Slightly slower speech for young learners
         speed: 0.9,
       },
     },
