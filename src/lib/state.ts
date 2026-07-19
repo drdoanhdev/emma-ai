@@ -1,11 +1,11 @@
 import { Redis } from "@upstash/redis";
 import type { ChildState } from "./types";
-import khangSeed from "../../data/khang.json";
+import { KHANG_SEED } from "./seed-khang";
 import { defaultChildState, normalizeChildState } from "./normalize-state";
 import { DEFAULT_CHILD_ID } from "./child-id";
 
 const SEEDS: Record<string, ChildState> = {
-  [DEFAULT_CHILD_ID]: defaultChildState(khangSeed as ChildState),
+  [DEFAULT_CHILD_ID]: defaultChildState(KHANG_SEED),
 };
 
 function childKey(childId: string): string {

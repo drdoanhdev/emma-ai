@@ -12,10 +12,10 @@ out/
 .env*.local
 
 # Dữ liệu cá nhân của con — repo nên để Private trên GitHub
-# minh.json phải được commit để Vercel build được (hoặc set env CHILD_STATE_JSON)
+# Seed chính nằm ở src/lib/seed-khang.ts (để Vercel build được)
 data/*.json
 !data/curriculum.json
-!data/minh.json
+!data/khang.json
 
 # OS / editor
 .DS_Store
