@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getChildState, saveChildState } from "@/lib/state";
 import { updateStateFromSession } from "@/lib/update-state";
+import { DEFAULT_CHILD_ID } from "@/lib/child-id";
 import type {
   ChildConfidence,
   Enjoyment,
@@ -9,7 +10,6 @@ import type {
 
 export const runtime = "nodejs";
 
-const DEFAULT_CHILD = "minh";
 const CONFIDENCE: ChildConfidence[] = ["good", "ok", "shy"];
 const ENJOYMENT: Enjoyment[] = ["😀", "😐", "🙁"];
 
@@ -49,9 +49,9 @@ export async function POST(request: Request) {
   };
 
   try {
-    const state = await getChildState(DEFAULT_CHILD);
+    const state = await getChildState(DEFAULT_CHILD_ID);
     const next = updateStateFromSession(state, report);
-    await saveChildState(DEFAULT_CHILD, next);
+    await saveChildState(DEFAULT_CHILD_ID, next);
     return NextResponse.json({ ok: true, state: next });
   } catch (err) {
     console.error("POST /api/session/complete:", err);

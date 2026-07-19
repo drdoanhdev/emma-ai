@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { getChildState } from "@/lib/state";
 import { buildTodayPlan } from "@/lib/planner";
 import { buildSystemPrompt } from "@/lib/prompt-builder";
+import { DEFAULT_CHILD_ID } from "@/lib/child-id";
 
 export const runtime = "nodejs";
 
 const REALTIME_MODEL = "gpt-realtime";
 const REALTIME_VOICE = "coral";
-const DEFAULT_CHILD = "minh";
 
 /**
  * Unified WebRTC session: browser sends SDP offer;
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   let instructions: string;
   try {
-    const state = await getChildState(DEFAULT_CHILD);
+    const state = await getChildState(DEFAULT_CHILD_ID);
     const plan = buildTodayPlan(state);
     instructions = buildSystemPrompt(state, plan);
   } catch (err) {

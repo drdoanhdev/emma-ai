@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./TalkButton.module.css";
 import SessionWrapUp from "./SessionWrapUp";
 
@@ -101,6 +101,23 @@ export default function TalkButton() {
   const emmaBufferRef = useRef("");
   const liveEmmaIdRef = useRef<string | null>(null);
   const sessionStartedAtRef = useRef<number | null>(null);
+  const captionsRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
+
+  useEffect(() => {
+    const el = captionsRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [captions]);
+
+  function onCaptionsScroll() {
+    const el = captionsRef.current;
+    if (!el) return;
+    const distanceFromBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight;
+    // Chỉ bám đáy nếu đang gần cuối; vuốt lên đọc lại thì tạm dừng auto-scroll
+    stickToBottomRef.current = distanceFromBottom < 96;
+  }
   const showViRef = useRef(showVi);
   showViRef.current = showVi;
 
@@ -192,6 +209,7 @@ export default function TalkButton() {
   async function startTalking() {
     setErrorMessage(null);
     setCaptions([]);
+    stickToBottomRef.current = true;
     emmaBufferRef.current = "";
     liveEmmaIdRef.current = null;
     setStatus("connecting");
@@ -358,7 +376,12 @@ export default function TalkButton() {
       )}
 
       {showCaptions && captions.length > 0 && (
-        <div className={styles.captions} aria-live="polite">
+        <div
+          ref={captionsRef}
+          className={styles.captions}
+          aria-live="polite"
+          onScroll={onCaptionsScroll}
+        >
           {captions.map((line) => (
             <div
               key={line.id}

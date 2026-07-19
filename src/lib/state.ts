@@ -1,12 +1,11 @@
 import { Redis } from "@upstash/redis";
 import type { ChildState } from "./types";
-import minhSeed from "../../data/minh.json";
+import khangSeed from "../../data/khang.json";
 import { defaultChildState, normalizeChildState } from "./normalize-state";
-
-const DEFAULT_CHILD = "minh";
+import { DEFAULT_CHILD_ID } from "./child-id";
 
 const SEEDS: Record<string, ChildState> = {
-  minh: defaultChildState(minhSeed as ChildState),
+  [DEFAULT_CHILD_ID]: defaultChildState(khangSeed as ChildState),
 };
 
 function childKey(childId: string): string {
@@ -43,16 +42,42 @@ function getRedis(): Redis {
   return redisSingleton;
 }
 
+/**
+ * Load child state. Migrates legacy `child:minh` → `child:khang` once if needed.
+ */
 export async function getChildState(
-  childId: string = DEFAULT_CHILD,
+  childId: string = DEFAULT_CHILD_ID,
 ): Promise<ChildState> {
   const redis = getRedis();
   const key = childKey(childId);
-  const stored = await redis.get<ChildState>(key);
+  let stored = await redis.get<ChildState>(key);
+
+  // One-time migrate from Week 1–2 key
+  if (!stored && childId === DEFAULT_CHILD_ID) {
+    const legacy = await redis.get<ChildState>(childKey("minh"));
+    if (legacy) {
+      stored = normalizeChildState({
+        ...legacy,
+        profile: {
+          ...legacy.profile,
+          name: "Duy Khang",
+        },
+      });
+      await redis.set(key, stored);
+    }
+  }
 
   if (stored) {
     const normalized = normalizeChildState(stored);
-    // Persist migration so subsequent reads stay complete
+    // Ensure display name matches the household child
+    if (
+      childId === DEFAULT_CHILD_ID &&
+      normalized.profile.name !== "Duy Khang"
+    ) {
+      normalized.profile = { ...normalized.profile, name: "Duy Khang" };
+      await redis.set(key, normalized);
+      return normalized;
+    }
     if (
       !stored.learning_memory ||
       !stored.preference_memory ||

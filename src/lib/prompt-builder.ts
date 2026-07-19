@@ -70,7 +70,7 @@ function buildProfileSection(profile: ChildProfile): string {
 - Level: ${profile.level}
 - Goals: ${profile.goals}
 - Interests: ${profile.interests.join(", ")}
-Use the child's name naturally. Lightly use interests for examples when it fits the mission.`;
+Use the child's name naturally. You may call him "Khang" for short sentences, or "Duy Khang" when greeting. Lightly use interests for examples when it fits the mission.`;
 }
 
 function buildMissionSection(

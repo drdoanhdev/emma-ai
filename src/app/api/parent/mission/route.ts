@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { getChildState, saveChildState } from "@/lib/state";
 import { buildParentDashboard } from "@/lib/dashboard";
+import { DEFAULT_CHILD_ID } from "@/lib/child-id";
 import type { DayMode, PreferenceMemory, ChildState } from "@/lib/types";
 
 export const runtime = "nodejs";
-
-const DEFAULT_CHILD = "minh";
 
 const DAY_MODES: DayMode[] = [
   "normal",
@@ -16,7 +15,7 @@ const DAY_MODES: DayMode[] = [
 
 export async function GET() {
   try {
-    const state = await getChildState(DEFAULT_CHILD);
+    const state = await getChildState(DEFAULT_CHILD_ID);
     const dashboard = buildParentDashboard(state);
     return NextResponse.json({ state, dashboard });
   } catch (err) {
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const current = await getChildState(DEFAULT_CHILD);
+    const current = await getChildState(DEFAULT_CHILD_ID);
     const next: ChildState = {
       ...current,
       mission: {
@@ -72,7 +71,7 @@ export async function POST(request: Request) {
           }
         : current.preference_memory,
     };
-    await saveChildState(DEFAULT_CHILD, next);
+    await saveChildState(DEFAULT_CHILD_ID, next);
     const dashboard = buildParentDashboard(next);
     return NextResponse.json({ state: next, dashboard });
   } catch (err) {
