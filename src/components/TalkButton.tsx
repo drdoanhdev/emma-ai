@@ -2,8 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import styles from "./TalkButton.module.css";
+import SessionWrapUp from "./SessionWrapUp";
 
-type Status = "idle" | "connecting" | "talking" | "error";
+type Status = "idle" | "connecting" | "talking" | "wrapup" | "error";
 
 type CaptionLine = {
   id: string;
@@ -91,6 +92,7 @@ export default function TalkButton() {
   const [showEn, setShowEn] = useState(true);
   const [showVi, setShowVi] = useState(true);
   const [captions, setCaptions] = useState<CaptionLine[]>([]);
+  const [lastDurationMin, setLastDurationMin] = useState(0);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -98,6 +100,7 @@ export default function TalkButton() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const emmaBufferRef = useRef("");
   const liveEmmaIdRef = useRef<string | null>(null);
+  const sessionStartedAtRef = useRef<number | null>(null);
   const showViRef = useRef(showVi);
   showViRef.current = showVi;
 
@@ -258,16 +261,17 @@ export default function TalkButton() {
       const answerSdp = await sdpResponse.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
 
+      sessionStartedAtRef.current = Date.now();
       setStatus("talking");
     } catch (err) {
       console.error(err);
-      stopTalking();
+      teardownMedia();
       setStatus("error");
       setErrorMessage(friendlyMicError(err));
     }
   }
 
-  function stopTalking() {
+  function teardownMedia() {
     dcRef.current?.close();
     dcRef.current = null;
 
@@ -286,12 +290,34 @@ export default function TalkButton() {
 
     emmaBufferRef.current = "";
     liveEmmaIdRef.current = null;
-    setStatus("idle");
+  }
+
+  function stopTalking() {
+    const started = sessionStartedAtRef.current;
+    const durationMin = started
+      ? Math.max(1, Math.round((Date.now() - started) / 60000))
+      : 1;
+    sessionStartedAtRef.current = null;
+    setLastDurationMin(durationMin);
+    teardownMedia();
+    setStatus("wrapup");
   }
 
   const isTalking = status === "talking";
   const isBusy = status === "connecting";
   const showCaptions = showEn || showVi;
+
+  if (status === "wrapup") {
+    return (
+      <div className={styles.wrap}>
+        <SessionWrapUp
+          durationMin={lastDurationMin}
+          onDone={() => setStatus("idle")}
+          onSkip={() => setStatus("idle")}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrap}>

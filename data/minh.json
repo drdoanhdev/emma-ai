@@ -15,5 +15,16 @@
     "mission_sentence": "Talk about lunch.",
     "parent_note": "Con sắp kiểm tra Speaking tuần này.",
     "day_mode": "normal"
-  }
+  },
+  "learning_memory": {
+    "vocab": [],
+    "grammar_covered": [],
+    "grammar_weak": []
+  },
+  "preference_memory": {
+    "favorite_animal": "dinosaur",
+    "favorite_game": "Minecraft",
+    "favorite_sport": ""
+  },
+  "session_history": []
 }

@@ -1,4 +1,5 @@
 import curriculumData from "../../data/curriculum.json";
+import { pickDueWords, pickNewWords } from "./review-engine";
 import type {
   ChildState,
   CurriculumUnit,
@@ -21,33 +22,15 @@ export function getCurrentUnit(
   return units[0] ?? { unit: 1, topic: "Greeting", vocabulary: [], grammar: "" };
 }
 
-/**
- * Week 2: no Learning Memory yet — review lists stay empty.
- * Signature matches docs so Week 3 can plug vocab in later.
- */
-function pickDueWords(_vocab: unknown[] | undefined, _max: number): string[] {
-  return [];
-}
-
-function pickNewWords(
-  missionVocab: string[],
-  _knownVocab: unknown[] | undefined,
-  max: number,
-): string[] {
-  return missionVocab.slice(0, max);
-}
-
 function hasParentNote(mission: WeeklyMission): boolean {
   return Boolean(mission.parent_note?.trim());
 }
 
-/**
- * Pure Planner — decides today's budget. No AI.
- * Content source: parent_note (if set) → else Curriculum unit.
- */
+/** Pure Planner — no AI. Uses Review Engine for due words. */
 export function buildTodayPlan(state: ChildState): TodayPlan {
   const units = getCurriculum();
   const parentDriven = hasParentNote(state.mission);
+  const vocab = state.learning_memory?.vocab ?? [];
 
   const unit = getCurrentUnit(units, state.mission.current_unit);
   const topic = parentDriven ? state.mission.topic : unit.topic;
@@ -59,17 +42,15 @@ export function buildTodayPlan(state: ChildState): TodayPlan {
     ? state.mission.mission_sentence
     : `Talk about ${unit.topic.toLowerCase()}.`;
 
-  const base = {
+  const base: TodayPlan = {
     topic,
     vocabulary,
     grammar,
     missionSentence,
     parentNote: state.mission.parent_note?.trim() ?? "",
-    contentSource: parentDriven
-      ? ("parent_note" as const)
-      : ("curriculum" as const),
-    reviewWords: pickDueWords(undefined, 2),
-    newWords: pickNewWords(vocabulary, undefined, 3),
+    contentSource: parentDriven ? "parent_note" : "curriculum",
+    reviewWords: pickDueWords(vocab, 2),
+    newWords: pickNewWords(vocabulary, vocab, 3),
     conversationMinutes: 5,
     gameMinutes: 3,
     wrapUpMinutes: 1,
@@ -98,7 +79,7 @@ export function buildTodayPlan(state: ChildState): TodayPlan {
       return {
         ...base,
         newWords: [],
-        reviewWords: pickDueWords(undefined, 5),
+        reviewWords: pickDueWords(vocab, 5),
       };
     default:
       return base;

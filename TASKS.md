@@ -22,26 +22,26 @@ Checklist theo `docs/03-roadmap.md`. Tick từng mục khi hoàn thành và test
 
 ## Tuần 3–4 — Learning Memory + Review Engine
 
-- [ ] Lưu trạng thái từ vựng theo quy tắc bảo thủ (mục 2c) — không "learned" sau 1 lần dùng đúng
-- [ ] Review Engine: lịch ôn cố định 1/3/7/21 ngày
-- [ ] Theo dõi `grammar_covered` / `grammar_weak`
-- [ ] **Không làm** `skill_breakdown` (để dành giai đoạn sau)
+- [x] Lưu trạng thái từ vựng theo quy tắc bảo thủ (mục 2c) — không "learned" sau 1 lần dùng đúng
+- [x] Review Engine: lịch ôn cố định 1/3/7/21 ngày
+- [x] Theo dõi `grammar_covered` / `grammar_weak`
+- [x] **Không làm** `skill_breakdown` (để dành giai đoạn sau)
 - [ ] Test hàng tuần với con, ghi chú vào phần dưới
 
 ## Tuần 5 — Preference Memory
 
-- [ ] Ghi nhớ sở thích (`preference_memory`) để cá nhân hóa ví dụ/game
-- [ ] Xác nhận không có trường nào lưu thông tin nhạy cảm (theo Memory Rules)
+- [x] Ghi nhớ sở thích (`preference_memory`) để cá nhân hóa ví dụ/game
+- [x] Xác nhận không có trường nào lưu thông tin nhạy cảm (theo Memory Rules)
 
 ## Tuần 6 — Dashboard phụ huynh
 
-- [ ] Hiển thị: phút đã luyện, từ đã học, chủ đề hoàn thành, nội dung cần ôn
-- [ ] Không chấm điểm IQ, không xếp hạng
+- [x] Hiển thị: phút đã luyện, từ đã học, chủ đề hoàn thành, nội dung cần ôn
+- [x] Không chấm điểm IQ, không xếp hạng
 
 ## Tuần 7–8 — Quan sát & tinh chỉnh
 
-- [ ] Xem lại Success Metrics mỗi tuần (Engagement / Confidence / Vocabulary / Enjoyment — xem `docs/03-roadmap.md`)
-- [ ] Ghi lại các lúc con mất hứng thú
+- [x] Panel Success Metrics trên `/parent` (Engagement / Confidence / Vocabulary / Enjoyment)
+- [ ] Ghi lại các lúc con mất hứng thú (nhật ký bên dưới — thủ công)
 - [ ] Tinh chỉnh Prompt/Planner dựa trên quan sát thực tế — không thêm tính năng mới trừ khi có lý do rõ ràng
 
 ---
@@ -60,3 +60,4 @@ Checklist theo `docs/03-roadmap.md`. Tick từng mục khi hoàn thành và test
 - Gamification (điểm số, leaderboard, huy hiệu)
 - Nhiều nhân vật AI
 - Database/ORM/Auth (Postgres, Prisma, Supabase Auth)
+- `skill_breakdown` chi tiết (Listening/Speaking/Pronunciation)

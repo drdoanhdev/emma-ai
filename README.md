@@ -12,27 +12,23 @@ Trợ lý luyện giao tiếp tiếng Anh bằng giọng nói cho trẻ 6–12 t
 
 - Next.js (App Router) + TypeScript
 - OpenAI Realtime API (voice)
-- State: Upstash Redis (`child:{id}`) — profile/mission
-- Curriculum tĩnh: `data/curriculum.json` (file local, không Redis)
+- State: Upstash Redis (`child:{id}`) — profile, mission, learning_memory, preference_memory, session_history
+- Curriculum tĩnh: `data/curriculum.json`
 
 ## Chạy local
 
 ```bash
 npm install
-cp .env.example .env.local   # Windows: copy .env.example .env.local
-# Điền OPENAI_API_KEY + Redis URL/TOKEN
 npm run dev
 ```
 
-Mở http://localhost:3000 (con) và http://localhost:3000/parent (phụ huynh).
+- Con: http://localhost:3000 — nói chuyện, phụ đề, form kết thúc buổi
+- Phụ huynh: http://localhost:3000/parent — mission, day_mode, sở thích, dashboard
 
 ## Deploy Vercel
 
-1. Thêm env: `OPENAI_API_KEY`, và `KV_REST_API_URL` + `KV_REST_API_TOKEN` (hoặc cặp `UPSTASH_REDIS_REST_*`).
-2. Deploy → mở `https://….vercel.app` và `/parent`.
-
-Lần đầu `getChildState("minh")` sẽ seed từ `data/minh.json` vào Redis nếu key chưa có.
+Env bắt buộc: `OPENAI_API_KEY`, `KV_REST_API_URL`, `KV_REST_API_TOKEN` (hoặc cặp `UPSTASH_REDIS_REST_*`).
 
 ## Trạng thái
 
-Xem [`TASKS.md`](TASKS.md).
+Xem [`TASKS.md`](TASKS.md). Các mục còn mở chủ yếu là **cho con thử** và ghi nhật ký quan sát (Tuần 7–8).

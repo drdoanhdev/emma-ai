@@ -1,23 +1,18 @@
 import { Redis } from "@upstash/redis";
 import type { ChildState } from "./types";
 import minhSeed from "../../data/minh.json";
+import { defaultChildState, normalizeChildState } from "./normalize-state";
 
 const DEFAULT_CHILD = "minh";
 
-/** Seed used when Redis key is empty (first run / new deploy). */
 const SEEDS: Record<string, ChildState> = {
-  minh: minhSeed as ChildState,
+  minh: defaultChildState(minhSeed as ChildState),
 };
 
 function childKey(childId: string): string {
   return `child:${childId}`;
 }
 
-/**
- * Resolve Redis REST credentials.
- * Supports Vercel KV names and native Upstash names.
- * (.env.local currently may only have OPENAI_API_KEY — add Redis vars before use.)
- */
 function getRedisEnv(): { url: string; token: string } {
   const url =
     process.env.KV_REST_API_URL?.trim() ||
@@ -56,7 +51,16 @@ export async function getChildState(
   const stored = await redis.get<ChildState>(key);
 
   if (stored) {
-    return stored;
+    const normalized = normalizeChildState(stored);
+    // Persist migration so subsequent reads stay complete
+    if (
+      !stored.learning_memory ||
+      !stored.preference_memory ||
+      !stored.session_history
+    ) {
+      await redis.set(key, normalized);
+    }
+    return normalized;
   }
 
   const seed = SEEDS[childId];
@@ -73,5 +77,5 @@ export async function saveChildState(
   state: ChildState,
 ): Promise<void> {
   const redis = getRedis();
-  await redis.set(childKey(childId), state);
+  await redis.set(childKey(childId), normalizeChildState(state));
 }

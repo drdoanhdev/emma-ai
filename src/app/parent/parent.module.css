@@ -127,3 +127,28 @@
   color: #b00020;
   font-size: 0.95rem;
 }
+
+.stats {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.input {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.55rem 0.75rem;
+  border: 2px solid #1a1a1a;
+  border-radius: 0.4rem;
+  background: #fff;
+}
