@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+Đây là dự án Emma AI — trợ lý luyện tiếng Anh cho trẻ 6-12 tuổi (dùng cá nhân, không phải SaaS).
+
+Đọc kỹ các file trong /docs trước khi viết bất kỳ code nào:
+- docs/01-vision-safety.md — triết lý và rào chắn an toàn (KHÔNG được vi phạm)
+- docs/02-architecture-data.md — kiến trúc và schema dữ liệu
+- docs/03-roadmap.md — thứ tự triển khai
+
+Nguyên tắc bắt buộc:
+- Không dùng database/ORM/auth phức tạp (Postgres, Prisma, Supabase Auth) — chỉ dùng file JSON local.
+- Không tạo microservice, không event bus, không queue.
+- Planner luôn là code thuần, không dùng AI để quyết định số lượng/nội dung.
+- Luôn tuân thủ rào chắn an toàn ở docs/01-vision-safety.md khi viết system prompt cho Emma.
+- Khi không chắc, hỏi lại thay vì tự đoán và code lan man ngoài phạm vi yêu cầu.

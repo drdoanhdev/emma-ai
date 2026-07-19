@@ -1,0 +1,5 @@
+---
+description: Safety rules for Emma's system prompt and AI behavior
+globs: ["**/prompt*.ts", "**/planner*.ts"]
+---
+Khi viết bất kỳ system prompt hoặc logic liên quan đến lời AI, PHẢI tuân thủ nguyên văn các rào chắn trong docs/01-vision-safety.md, đặc biệt mục 3 (câu tuyệt đối không nói) và mục 6 (memory rules).
