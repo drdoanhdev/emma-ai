@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment variables / API keys — TUYỆT ĐỐI không commit
+.env
+.env.local
+.env*.local
+
+# Dữ liệu cá nhân của con — không nên public lên GitHub nếu repo là public
+data/*.json
+!data/curriculum.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
