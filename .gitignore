@@ -4,17 +4,21 @@ node_modules/
 # Next.js build output
 .next/
 out/
+*.tsbuildinfo
 
 # Environment variables / API keys — TUYỆT ĐỐI không commit
 .env
 .env.local
 .env*.local
 
-# Dữ liệu cá nhân của con — không nên public lên GitHub nếu repo là public
+# Dữ liệu cá nhân của con — repo nên để Private trên GitHub
+# minh.json phải được commit để Vercel build được (hoặc set env CHILD_STATE_JSON)
 data/*.json
 !data/curriculum.json
+!data/minh.json
 
 # OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
+.vercel/

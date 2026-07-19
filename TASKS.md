@@ -4,11 +4,11 @@ Checklist theo `docs/03-roadmap.md`. Tick từng mục khi hoàn thành và test
 
 ## Tuần 1 — Nền tảng + Voice
 
-- [ ] Khởi tạo dự án Next.js + TypeScript
-- [ ] Tạo `data/{child}.json` với `profile` + `mission` tối thiểu (theo schema ở `docs/02-architecture-data.md` mục 2)
-- [ ] Tích hợp Realtime Voice API (OpenAI Realtime hoặc Gemini Live — chọn 1)
-- [ ] Màn hình hội thoại tối giản: 1 nút "Nói chuyện với Emma"
-- [ ] Prompt Builder bản đầu: Personality + Safety + Profile + Mission
+- [x] Khởi tạo dự án Next.js + TypeScript
+- [x] Tạo `data/{child}.json` với `profile` + `mission` tối thiểu (theo schema ở `docs/02-architecture-data.md` mục 2)
+- [x] Tích hợp Realtime Voice API (OpenAI Realtime hoặc Gemini Live — chọn 1)
+- [x] Màn hình hội thoại tối giản: 1 nút "Nói chuyện với Emma"
+- [x] Prompt Builder bản đầu: Personality + Safety + Profile + Mission
 - [ ] Kiểm tra độ trễ và chất lượng giọng
 - [ ] **Cho con thử** — ghi chú phản ứng: có thích giọng không, có muốn nói tiếp không
 
