@@ -6,9 +6,9 @@ import type {
   PreferenceMemory,
   SessionSummary,
   TodayPlan,
-  WeeklyMission,
 } from "./types";
 import { buildTodayPlan } from "./planner";
+import { assertPromptBudget } from "./realtime-config";
 
 const MAX_WORDS_BY_LEVEL: Record<CefrLevel, number> = {
   A1: 8,
@@ -20,210 +20,168 @@ function maxWordsForLevel(level: CefrLevel): number {
   return MAX_WORDS_BY_LEVEL[level] ?? MAX_WORDS_BY_LEVEL.A1;
 }
 
-function buildPersonalitySection(
-  level: CefrLevel,
-  interests: string[],
-): string {
+/** Mid-session or rotate context injected into continuation prompt. */
+export type ContinuationContext = {
+  summary: string;
+  topic?: string | null;
+  elapsedMin?: number;
+};
+
+function buildFixedSection(level: CefrLevel): string {
   const maxWords = maxWordsForLevel(level);
-  const interestList = interests.join(", ") || "everyday life";
-  return `# Emma Personality
-You are Emma, a Learning Coach for a child learning English (ages 6–12).
-You are 80% warm friend, 20% gentle teacher — not a free chatbot, not an emotional companion.
-Be cheerful. Speak slowly and clearly in English.
-Keep each sentence short: at most ${maxWords} words (child level ${level}).
-Always encourage. When correcting, gently repeat the correct sentence — never say the child is "wrong" or "sai".
-Stay with the topic the child chose for this session.
-Use the child's interests (${interestList}) as examples and conversation hooks whenever natural, especially during games.`;
+  return `# Emma (fixed)
+You are Emma, a warm English Learning Coach for a child (6–12). 80% friend, 20% gentle teacher.
+Speak slowly in English. Max ${maxWords} words per sentence (level ${level}).
+Encourage always. Correct by repeating the right sentence — never say "wrong" or "sai".
+Stay on the child's chosen topic.
+
+# Safety (HARD)
+NEVER say: "I missed you." / "I waited for you." / "Why didn't you come yesterday?" / "I was lonely." / anything implying you monitor the child or grow emotionally attached.
+Prefer: "Welcome back." / "Ready for today's mission?" / "Last time we learned animals."
+No medical, financial, political, or violence topics — answer briefly, return to lesson.
+Do NOT ask about family problems, sadness, illness, or sensitive topics.
+Only use safe preferences (animals, games, sports) for light examples.
+When wrapping up: short praise → one review point → tiny real-life task → "Did you enjoy today?" 😀 😐 🙁`;
 }
 
-function buildSafetySection(): string {
-  return `# Safety Rules (HARD — never break these)
-
-## Phrases you MUST NEVER say
-- "I missed you."
-- "I waited for you."
-- "Why didn't you come yesterday?"
-- "I was lonely."
-- Any sentence that suggests you are monitoring the child or growing emotionally attached over time.
-
-## Preferred warm openings (use these styles instead)
-- "Welcome back."
-- "Ready for today's mission?"
-- "Last time we learned animals."
-Be warm and consistent — never dramatic, never imply that you "need" the child to return.
-
-## Content limits
-Do not give medical advice, financial advice, or talk about politics or violence.
-If the child asks about those topics: answer briefly and neutrally, then gently return to the lesson.
-
-## Ending a session (when wrapping up)
-1. Short praise.
-2. Review one main point from today.
-3. Give one tiny real-life task (e.g. ask a parent a simple question and tell Emma tomorrow).
-4. Ask enjoyment with a simple choice: "Did you enjoy today?" with 😀 😐 🙁
-Never end abruptly.
-
-## Memory rules for you
-Do NOT ask about or store family problems, sadness, illness, or other sensitive topics.
-Only use safe preferences (animals, games, sports) for light examples.`;
+function buildOpeningSection(plan: TodayPlan): string {
+  const [a, b] = plan.topicSuggestions;
+  const topicA = a?.topic ?? plan.topic;
+  const topicB = b?.topic ?? "Hobbies";
+  return `# Session opening (first only)
+Greet warmly, then ask: "${topicA}" or "${topicB}? Or tell me another idea?"
+Understand Vietnamese answers (e.g. "hôm nay con đi chợ") as their chosen situation.
+- Picks 1/2: use that topic + today's vocab.
+- Own situation: role-play in English; weave vocab: ${plan.vocabulary.slice(0, 6).join(", ") || "none"}; teach 1–2 new words for their situation.
+- Silent: default to ${topicA}.
+Do not skip the choice at session start.`;
 }
 
-function buildSessionOpeningSection(plan: TodayPlan): string {
+function buildMemoryCompactSection(
+  profile: ChildProfile,
+  memory: LearningMemory,
+  preferences: PreferenceMemory,
+  plan: TodayPlan,
+  last: SessionSummary | undefined,
+): string {
+  const relevant = memory.vocab
+    .filter(
+      (v) =>
+        plan.newWords.includes(v.word) ||
+        plan.reviewWords.includes(v.word) ||
+        plan.vocabulary.map((w) => w.toLowerCase()).includes(v.word),
+    )
+    .slice(0, 8);
+
+  const vocabLine =
+    relevant.length > 0
+      ? relevant.map((v) => `${v.word}(${v.status})`).join(", ")
+      : "none";
+
+  const prefs = [
+    preferences.favorite_animal && `animal=${preferences.favorite_animal}`,
+    preferences.favorite_game && `game=${preferences.favorite_game}`,
+    preferences.favorite_sport && `sport=${preferences.favorite_sport}`,
+  ]
+    .filter(Boolean)
+    .join("; ");
+
+  const lastLine = last
+    ? `Last session (${last.date}): topic=${last.topic}, new=${last.new_words.slice(0, 4).join(",") || "none"}`
+    : "Last session: none";
+
+  return `# Child & memory
+Name: ${profile.name}, age ${profile.age}, level ${profile.level}. Interests: ${profile.interests.slice(0, 4).join(", ") || "everyday"}.
+Prefs: ${prefs || "none"}.
+Today vocab memory: ${vocabLine}.
+Grammar weak: ${memory.grammar_weak.slice(0, 2).join(", ") || "none"}.
+${lastLine}`;
+}
+
+function buildDynamicSection(mission: ChildState["mission"], plan: TodayPlan): string {
   const [a, b] = plan.topicSuggestions;
   const topicA = a?.topic ?? plan.topic;
   const topicB = b?.topic ?? "Hobbies";
 
-  return `# Session Opening (MUST do this first)
-At the start of the session, warmly greet the child, then ASK them to choose a topic.
-Offer exactly these two suggestions from the Planner:
-1) ${topicA}
-2) ${topicB}
-
-Ask in simple English like:
-"Today: ${topicA} or ${topicB}? Or tell me another idea?"
-
-You MUST understand if the child answers in Vietnamese (e.g. "hôm nay con đi chợ", "về quê chơi") and treat that as their chosen situation.
-
-## Three branches after the child answers
-1) Child picks suggestion 1 or 2:
-   - Use that unit's vocabulary/grammar from today's plan.
-   - Continue the lesson in English around that topic.
-
-2) Child suggests a different situation (English OR Vietnamese):
-   - Switch into role-play in English matching THEIR situation.
-   - Still keep today's mission vocabulary available: ${plan.vocabulary.join(", ") || "(none)"}.
-   - Weave those words in naturally when they fit — do not force awkwardly.
-   - Always teach at least 1–2 new words tied directly to the child's situation
-     (e.g. market → buy, price, vendor; countryside → village, visit, field).
-
-3) Child is silent / has no opinion:
-   - Default to suggestion 1: ${topicA}.
-   - Start gently with that topic.
-
-Do NOT jump straight into a fixed lesson before offering the choice.
-After the topic is chosen, stay on it for the session.`;
+  return `# Today
+Topic: ${plan.topic}. Unit ${mission.current_unit}. Grammar: ${plan.grammar}.
+Vocab: ${plan.vocabulary.slice(0, 8).join(", ") || "none"}.
+New words (max): ${plan.newWords.slice(0, 4).join(", ") || "none"}.
+Review: ${plan.reviewWords.slice(0, 4).join(", ") || "none"}.
+Mode: ${plan.dayMode}. Max new questions: ${plan.maxNewQuestions}.
+Suggestions: ${topicA}, ${topicB}.
+${plan.parentNote ? `Parent note: ${plan.parentNote.slice(0, 120)}` : ""}`;
 }
 
-function buildProfileSection(profile: ChildProfile): string {
-  return `# Child Profile
-- Name: ${profile.name}
-- Age: ${profile.age}
-- Level: ${profile.level} (max ${maxWordsForLevel(profile.level)} words per sentence)
-- Goals: ${profile.goals}
-- Interests: ${profile.interests.join(", ")}
-- Start date: ${profile.start_date ?? "(not set)"}
-Use the child's name naturally. You may call him "Khang" for short sentences, or "Duy Khang" when greeting.
-Use interests (${profile.interests.join(", ")}) as examples and conversation hooks whenever natural, especially during games.`;
+function buildMidSessionSummarySection(summary: string): string {
+  return `# Session so far (summary)\n${summary.trim()}`;
 }
 
-function buildMissionSection(
-  mission: WeeklyMission,
-  plan: TodayPlan,
+function buildContinuationSection(ctx: ContinuationContext): string {
+  const parts = [
+    "# Continue session",
+    "This is a seamless continuation — do NOT re-greet or re-ask topic choice.",
+    ctx.topic ? `Continue topic: ${ctx.topic}.` : "",
+    ctx.elapsedMin ? `Elapsed: ~${ctx.elapsedMin} min.` : "",
+    buildMidSessionSummarySection(ctx.summary),
+  ];
+  return parts.filter(Boolean).join("\n");
+}
+
+function joinAndBudget(sections: string[]): string {
+  const text = sections.join("\n\n");
+  assertPromptBudget(text);
+  return text;
+}
+
+/** Compact system prompt for a new voice session (~400 tokens). */
+export function buildCompactSystemPrompt(
+  state: ChildState,
+  plan?: TodayPlan,
 ): string {
-  const sourceNote =
-    plan.contentSource === "parent_note"
-      ? "Content source: PARENT NOTE (highest priority — follow this closely)."
-      : "Content source: Curriculum unit (fallback when no parent note).";
-
-  return `# Weekly Mission (Planner targets — soft guide, not a hard override of child's chosen situation)
-- Week: ${mission.week}
-- Unit: ${mission.current_unit}
-- Planner topic: ${plan.topic}
-- Vocabulary to weave in when natural: ${plan.vocabulary.join(", ") || "(none)"}
-- Grammar focus: ${plan.grammar}
-- Mission sentence: ${plan.missionSentence}
-- Parent note: ${plan.parentNote || "(none)"}
-- Day mode: ${plan.dayMode}
-- ${sourceNote}
-If the child chose their own situation, follow THAT situation and weave mission vocabulary in gently.`;
-}
-
-function buildBudgetSection(plan: TodayPlan): string {
-  return `# Today's Budget (from Planner — follow these limits)
-- Day mode: ${plan.dayMode}
-- New words to introduce (max): ${plan.newWords.join(", ") || "(none today)"}
-- Review words: ${plan.reviewWords.join(", ") || "(none due today)"}
-- Conversation minutes: ~${plan.conversationMinutes}
-- Game minutes: ~${plan.gameMinutes}
-- Wrap-up minutes: ~${plan.wrapUpMinutes}
-- Max new questions this session: ${plan.maxNewQuestions}
-Do not teach more new words or ask more new questions than this budget allows.`;
-}
-
-function buildMemorySection(
-  memory: LearningMemory,
-  preferences: PreferenceMemory,
-  plan: TodayPlan,
-): string {
-  const relevant = memory.vocab.filter(
-    (v) =>
-      plan.newWords.includes(v.word) ||
-      plan.reviewWords.includes(v.word) ||
-      plan.vocabulary.map((w) => w.toLowerCase()).includes(v.word),
-  );
-  const vocabLines =
-    relevant.length > 0
-      ? relevant
-          .map(
-            (v) =>
-              `- ${v.word} (${v.status}, stage ${v.review_stage}, used in ${v.distinct_sessions_used} sessions)`,
-          )
-          .join("\n")
-      : "- (no overlapping memory entries yet)";
-
-  const prefs = [
-    preferences.favorite_animal &&
-      `favorite animal: ${preferences.favorite_animal}`,
-    preferences.favorite_game && `favorite game: ${preferences.favorite_game}`,
-    preferences.favorite_sport &&
-      `favorite sport: ${preferences.favorite_sport}`,
-  ].filter(Boolean);
-
-  return `# Learning Memory (today-relevant only)
-Vocabulary:
-${vocabLines}
-Grammar covered: ${memory.grammar_covered.join(", ") || "(none)"}
-Grammar still weak: ${memory.grammar_weak.join(", ") || "(none)"}
-
-# Preference Memory (safe likes only — for examples/games)
-${prefs.length ? prefs.map((p) => `- ${p}`).join("\n") : "- (none set)"}
-Use preferences only for friendly examples. Never invent sensitive personal stories.`;
-}
-
-function buildRecentSummarySection(
-  recent: SessionSummary | undefined,
-): string {
-  if (!recent) {
-    return `# Last session
-No previous session summary yet.`;
-  }
-  return `# Last session (one only)
-- Date: ${recent.date}
-- Duration: ${recent.duration_min} min
-- Topic: ${recent.topic}
-- Topic source: ${recent.topic_source}
-- New words: ${recent.new_words.join(", ") || "(none)"}
-- Reviewed: ${recent.reviewed.join(", ") || "(none)"}
-- Confidence: ${recent.child_confidence}
-- Enjoyment: ${recent.enjoyment}
-- Notes: ${recent.notes || "(none)"}`;
-}
-
-export function buildSystemPrompt(state: ChildState, plan?: TodayPlan): string {
   const today = plan ?? buildTodayPlan(state);
   const last = state.session_history.slice(-1)[0];
-  return [
-    buildPersonalitySection(state.profile.level, state.profile.interests),
-    buildSafetySection(),
-    buildSessionOpeningSection(today),
-    buildProfileSection(state.profile),
-    buildMissionSection(state.mission, today),
-    buildBudgetSection(today),
-    buildMemorySection(
+  return joinAndBudget([
+    buildFixedSection(state.profile.level),
+    buildOpeningSection(today),
+    buildMemoryCompactSection(
+      state.profile,
       state.learning_memory,
       state.preference_memory,
       today,
+      last,
     ),
-    buildRecentSummarySection(last),
-  ].join("\n\n");
+    buildDynamicSection(state.mission, today),
+  ]);
+}
+
+/** Prompt for session rotate — skips opening, includes mid-session summary. */
+export function buildContinuationPrompt(
+  state: ChildState,
+  ctx: ContinuationContext,
+  plan?: TodayPlan,
+): string {
+  const today = plan ?? buildTodayPlan(state);
+  const last = state.session_history.slice(-1)[0];
+  return joinAndBudget([
+    buildFixedSection(state.profile.level),
+    buildContinuationSection(ctx),
+    buildMemoryCompactSection(
+      state.profile,
+      state.learning_memory,
+      state.preference_memory,
+      today,
+      last,
+    ),
+    buildDynamicSection(state.mission, today),
+  ]);
+}
+
+/** @deprecated Use buildCompactSystemPrompt — kept for any legacy callers. */
+export function buildSystemPrompt(state: ChildState, plan?: TodayPlan): string {
+  return buildCompactSystemPrompt(state, plan);
+}
+
+export function estimatePromptTokens(text: string): number {
+  return Math.ceil(text.length / 4);
 }

@@ -225,29 +225,48 @@ Bố mẹ chọn trước buổi học (giao diện đơn giản: 4 nút bấm),
 System prompt được ghép từ các phần riêng biệt (mỗi phần là 1 hàm nhỏ, dễ sửa độc lập mà không ảnh hưởng phần khác — ví dụ sửa Personality không đụng tới Safety):
 
 ```ts
-function buildSystemPrompt(state, plan) {
+function buildCompactSystemPrompt(state, plan) {
   return [
-    buildPersonalitySection(),       // từ 01-vision-safety.md, ít khi đổi
-    buildSafetySection(),            // rào chắn cứng, KHÔNG được LLM viết lại tự do
-    buildProfileSection(state.profile),
-    buildMissionSection(state.mission),
-    buildBudgetSection(plan),        // budget hôm nay từ Planner
-    buildMemorySection(state.learning_memory, state.preference_memory),
-    buildRecentSummarySection(state.session_history.slice(-1)) // chỉ buổi gần nhất, không toàn bộ
+    buildFixedSection(level),           // personality + safety cứng (~250 token)
+    buildOpeningSection(plan),          // session opening — chỉ buổi mới
+    buildMemoryCompactSection(...),     // profile + prefs + vocab hôm nay (~100 token)
+    buildDynamicSection(mission, plan), // mission + budget (~50 token)
   ].join("\n\n");
+}
+
+function buildContinuationPrompt(state, ctx, plan) {
+  // Giống trên nhưng thay opening bằng mid-session summary (rotate sau 5 phút)
 }
 ```
 
-Thứ tự ghép:
-1. Emma Personality (ít đổi)
-2. Safety rules (rào chắn cứng)
-3. Child Profile
-4. Weekly Mission (đã qua Curriculum/Parent override)
-5. Today's Budget (từ Planner, đã áp `day_mode`)
-6. Learning Memory + Preference Memory (chỉ phần liên quan hôm nay)
-7. Tóm tắt buổi gần nhất (1 buổi, không gửi toàn bộ lịch sử)
+Thứ tự ghép (compact):
+1. **Fixed** — Emma personality + Safety rules (rào chắn cứng, không rút gọn nghĩa)
+2. **Opening** — chỉ session mới (hỏi chọn chủ đề)
+3. **Memory** — profile, prefs, vocab liên quan hôm nay, 1 dòng last session
+4. **Dynamic** — mission, vocab, budget từ Planner
 
 Không bao giờ gửi toàn bộ `session_history` hay transcript đầy đủ.
+
+### 4b. Cost optimization (Realtime in-session)
+
+Realtime API đọc lại **toàn bộ conversation** mỗi turn — context phình theo thời gian nếu không xử lý.
+
+**Giảm prompt (~400 token thay vì ~3000):** 3 lớp compact ở trên; `assertPromptBudget()` cảnh báo nếu vượt 600 token.
+
+**Giới hạn output:** `max_output_tokens` theo level (A1: 40, A2: 50, B1: 60) — config trong `src/lib/realtime-config.ts`.
+
+**Truncation server-side (lưới an toàn):** `post_instructions: 1200`, `retention_ratio: 0.8` trong session config.
+
+**Compaction mỗi 10 lượt (client):**
+- Giữ 5 lượt gần nhất
+- Summarize phần cũ bằng `gpt-4o-mini` (`/api/realtime/summarize`)
+- `conversation.item.create` (summary) + `conversation.item.delete` (items cũ)
+
+**Rotate session ngầm sau 5 phút:**
+- Summarize → WebRTC session mới với `buildContinuationPrompt`
+- User không thấy wrap-up; mic stream được reuse
+
+Env tùy chọn: `REALTIME_MODEL`, `REALTIME_MAX_OUTPUT_TOKENS`, `REALTIME_COMPACT_EVERY_TURNS`, `REALTIME_ROTATE_MINUTES`, v.v. (xem `.env.example`).
 
 ## 5. Voice
 

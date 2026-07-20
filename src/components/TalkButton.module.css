@@ -110,3 +110,10 @@
   max-width: 24rem;
   text-align: center;
 }
+
+.debug {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #666;
+  font-family: ui-monospace, monospace;
+}
